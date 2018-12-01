@@ -65,6 +65,38 @@ app.post('/', (req,res) => {
 */
 
 
+
+//gia ma va ma hoa base64
+var fs = require('fs');
+// function to encode file data to base64 encoded string
+function base64_encode(file) {
+    // read binary data
+    var bitmap = fs.readFileSync(file); //chuyenthanh buffer
+    // convert binary data to base64 encoded string
+    return new Buffer(bitmap).toString('base64');
+}
+
+// function to create file from base64 encoded string
+function base64_decode(base64str, file) {
+    // create buffer object from base64 encoded string, it is important to tell the constructor that the string is base64 encoded
+    var bitmap = new Buffer(base64str, 'base64');
+    // write buffer to file
+    fs.writeFileSync(file, bitmap);
+    console.log('******** File created from base64 encoded string ********');
+}
+
+// convert image to base64 encoded string
+var base64str = base64_encode('1.jpg');
+console.log(base64str);
+
+/*
+// convert base64 string back to image 
+base64_decode(base64str, 'copy.jpg');
+*/
+
+
+
+
 var express = require('express');
 var app = express();
 var server = require('http').Server(app);
@@ -78,9 +110,62 @@ var server = require('http').Server(app);
         console.log(data);
        // console.log(data.toJSON());
         console.log(Buffer(data).toString());
-        io.sockets.emit('server-send-client', { typedata: [ {anh: noidung, id: socket.id, text: data} ], type: [{ ba: '3', hai: '2'}], noidungemit:[ {dataImageJson: fileanh}] });
+      io.sockets.emit('server-send-client', { typedata: [ {anh: noidung, id: socket.id, text: data} ], type: [{ ba: '3', hai: '2'}], noidungemit:[ {dataImageJson: fileanh}], fileBase: [{ fileImgaBase: base64str,bufferImage: bitmap  }] });
     })
  });
 
 
 //console.log(text.toJSON());
+
+
+/*
+var roles = {
+  sender  : "",
+  receiver    : ""  
+};
+io.sockets.on('connection', function (socket) { 
+  socket.on('setRole', function (data) {
+    socket.role = data.trim();
+    roles[socket.role] = socket.id;
+    console.log("Role "+ socket.role + " is connected.");    
+  }); 
+
+  socket.on("sendPhoto", function(data){
+    var guess = data.base64.match(/^data:image\/(png|jpeg);base64,/)[1];
+    var ext = "";
+    switch(guess) {
+      case "png"  : ext = ".png"; break;
+      case "jpeg" : ext = ".jpg"; break;
+      default     : ext = ".bin"; break;
+    }
+    var savedFilename = "/upload/"+randomString(10)+ext; //Trong sự kiện sendPhoto  ở trên, mình xử lý lưu ảnh vào thư mục public/upload/  co ten file lay gay nhien randomString(10)+ext
+    fs.writeFile(__dirname+"/public"+savedFilename, getBase64Image(data.base64), 'base64', function(err) {
+      if (err !== null)
+        console.log(err);
+      else 
+        io.to(roles.receiver).emit("receivePhoto", {
+          path: savedFilename,
+        });
+        console.log("Send photo success!");
+    });
+  });
+
+  socket.on('disconnect', function() {
+    console.log("Role " + socket.role + " is disconnect.");
+  }); 
+});
+
+function randomString(length)
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+    for( var i=0; i < length; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
+function getBase64Image(imgData) {
+    return imgData.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+}
+*/
